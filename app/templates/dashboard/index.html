@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+
+<body>
+
+    <h2>Welcome to your dashboard</h2>
+
+    {% extends "base.html" %}
+
+    {% block title %}Dashboard - LaunchShield{% endblock %}
+
+    {% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-3">
+            {% for category, message in messages %}
+            <div
+                class="p-4 rounded-lg text-sm font-medium border {% if category == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-200{% elif category == 'danger' %}bg-rose-50 text-rose-800 border-rose-200{% else %}bg-indigo-50 text-indigo-800 border-indigo-200{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Header & Tenant Info -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Feature Flags</h1>
+                <p class="mt-1 text-sm text-gray-500">Manage, launch, and target capabilities in real-time across
+                    environments.</p>
+            </div>
+            <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+                <span
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                    Tenant ID: <code class="ml-1 font-mono text-indigo-900">{{ current_user.tenant_id[:8] }}...</code>
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- LEFT: Create Flag Form -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Create Feature Flag</h2>
+
+                <form method="POST" action="{{ url_for('dashboard.index') }}" class="space-y-4">
+                    {{ create_form.hidden_tag() }}
+
+                    <div>
+                        <label for="key" class="block text-sm font-medium text-gray-700">Flag Key</label>
+                        {{ create_form.key(class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono",
+                        placeholder="e.g. beta_checkout") }}
+                        {% if create_form.key.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ create_form.key.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Flag Name</label>
+                        {{ create_form.name(class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                        placeholder="e.g.
+                        Beta Checkout Flow") }}
+                        {% if create_form.name.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ create_form.name.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        {{ create_form.description(class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg
+                        text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                        placeholder="Optional brief overview...") }}
+                    </div>
+
+                    <div class="flex items-center space-x-2 pt-2">
+                        {{ create_form.is_enabled(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300
+                        rounded") }}
+                        <label for="is_enabled" class="text-sm font-medium text-gray-700">Enable immediately upon
+                            creation</label>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full mt-2 inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors">
+                        Create Flag
+                    </button>
+                </form>
+            </div>
+
+            <!-- RIGHT: Flags List -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+                    <h2 class="text-base font-semibold text-gray-900">Active Flags</h2>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-700">
+                        Total: {{ flag|length }}
+                    </span>
+                </div>
+
+                {% if not flag %}
+                <div class="p-12 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No feature flag</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating your first feature flag using the
+                        form.
+                    </p>
+                </div>
+                {% else %}
+                <div class="divide-y divide-gray-200">
+                    {% for flags in flag %}
+                    <div class="p-6 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                        <div class="space-y-1 pr-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="font-semibold text-gray-900 text-base">{{ flags.name }}</span>
+                                <code
+                                    class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">
+                                     {{ flags.key }}
+                                 </code>
+                            </div>
+                            {% if flags.description %}
+                            <p class="text-sm text-gray-500">{{ flags.description }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-400">Created {{ flags.created_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+
+                        <!-- Toggle Button Form -->
+                        <form method="POST" action="{{ url_for('dashboard.flag_toggle', flag_id=flags.id) }}">
+                            {{ toggle_form.hidden_tag() }}
+                            <button type="submit"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {% if flags.is_enabled %}bg-emerald-500{% else %}bg-gray-300{% endif %}"
+                                role="switch" aria-checked="{{ 'true' if flag.is_enabled else 'false' }}">
+                                <span class="sr-only">Toggle flag</span>
+                                <span aria-hidden="true"
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {% if flags.is_enabled %}translate-x-5{% else %}translate-x-0{% endif %}"></span>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+    {% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}LaunchShield{% endblock %}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+            background: #f4f6f8;
+        }
+
+        .navbar {
+            background: #1e293b;
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div class="navbar">
+        <h2>🛡️ LaunchShield Platform</h2>
+    </div>
+
+    <div class="card">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+
+</html>

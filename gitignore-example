@@ -1,0 +1,6 @@
+DATABASE_URL = your postgres url
+SCRETE_KEY= your secret key
+REDIS_HOST= "localhost"
+REDIS_PORT= "6379"
+REDIS_DB = "0"
+FLASK_ENV= "development"
