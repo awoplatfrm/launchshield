@@ -1,2 +1,4 @@
 python-dotenv>=1.0.0
 flask>=3.0.0
+flask-marshmallow>=1.5.0
+marshmallow-sqlalchemy>=1.5.0

@@ -12,14 +12,19 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 
 
-def create_app(config_name="development"):
+def create_app(config_name="development", config_override=None):
 
     app = Flask(__name__, instance_relative_config=True)
     # config app
     # load configuration class
-    app.config.from_object(
-        config_by_name.get(config_name, config_by_name["development"])
-    )
+
+    cls_config = config_by_name.get(config_name, config_by_name["development"])
+    app.config.from_object(cls_config)
+
+    if config_override:
+        app.config.update(config_override)
+
+    # initialize db AFTER config applied
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
@@ -32,9 +37,11 @@ def create_app(config_name="development"):
     # register route blueprint
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
+    from app.routes.api import api_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(dashboard_bp, url_prefix="/api/v1")
+    app.register_blueprint(api_bp, url_prefix="/api/v1/flags")
 
     # database schema initialization
     with app.app_context():
@@ -43,47 +50,5 @@ def create_app(config_name="development"):
     @app.route("/health")
     def health_check():
         return {"status": "healthy", "app_name": "launchshield"}
-
-    @app.get("/api/v1/flags/evaluate")
-    def evaluate_flag():
-        tenant = request.args.get("tenant", "public")
-        flag_name = request.args.get("flag", "default_flag")
-
-        return {
-            "tenant": tenant,
-            "flag": flag_name,
-            "enable": True,
-            "reason": "targeting rule matched",
-        }
-
-    @app.get("/api/v1/tenants/<int:tenant_id>")
-    def get_tenant(tenant_id):
-        return {
-            "tenant_id": tenant_id,
-            "company_name": f"Tenant_{tenant_id} Corp",
-            "tier": "Pro Plan",
-        }
-
-    @app.post("/api/v1/flags/create")
-    def create_flag():
-        header = request.headers.get("X-API-KEY")
-        if not header:
-            return {"error": " Missing X-API-KEY Header"}, 401
-        payload = request.get_json(silent=True)
-
-        if not payload or "flag-key" not in payload:
-            return {"error": "invalid payload. flag-key is missing"}, 400
-        flag_key = payload.get("flag_key")
-        is_enable = payload.get("is_enable", False)
-
-        return {
-            "status": "success",
-            "message": f"Feature flag {flag_key} created successfully",
-            "data": {
-                "flag_key": flag_key,
-                "is_enable": is_enable,
-                "created_by_api_key": header,
-            },
-        }, 201
 
     return app
